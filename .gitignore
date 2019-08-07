@@ -68,3 +68,8 @@ Desktop.ini
 
 # Mac OS X
 *.DS_Store
+neuralcoref/train/a.py
+neuralcoref/train/learncopy.py
+neuralcoref/train/test_corefs.txt
+neuralcoref/train/test_mentions.txt
+neuralcoref/train/test_mentions2.txt
