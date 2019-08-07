@@ -58,8 +58,8 @@ INPUT
 
 OUTPUT
    The score subroutine returns an array with four values in this order:
-   1) Recall numerator
-   2) Recall denominator
+   1) Recall numerator 分子
+   2) Recall denominator 分母
    3) Precision numerator
    4) Precision denominator
 

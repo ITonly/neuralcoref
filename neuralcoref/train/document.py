@@ -8,8 +8,8 @@ import re
 import io
 from six import string_types, integer_types
 
-from neuralcoref.compat import unicode_
-from neuralcoref.utils import encode_distance, parallel_process
+from neuralcoref.train.compat import unicode_
+from neuralcoref.train.utils import encode_distance, parallel_process
 
 try:
     from itertools import izip_longest as zip_longest
@@ -29,7 +29,7 @@ MENTION_TYPE = {"PRONOMINAL": 0, "NOMINAL": 1, "PROPER": 2, "LIST": 3}
 MENTION_LABEL = {0: "PRONOMINAL", 1: "NOMINAL", 2: "PROPER", 3: "LIST"}
 
 PROPERS_TAGS = ["NN", "NNS", "NNP", "NNPS"]
-ACCEPTED_ENTS = ["PERSON", "NORP", "FACILITY", "ORG", "GPE", "LOC", "PRODUCT", "EVENT", "WORK_OF_ART", "LANGUAGE"]
+ACCEPTED_ENTS = ["PERSON", "NORP", "FAC", "ORG", "GPE", "LOC", "PRODUCT", "EVENT", "WORK_OF_ART", "LANGUAGE"]
 WHITESPACE_PATTERN = r"\s+|_+"
 UNKNOWN_WORD = "*UNK*"
 MISSING_WORD = "<missing>"
@@ -544,7 +544,9 @@ class Document(object):
             yield mention
 
     #######################################
-    ###### UTERANCE LOADING FUNCTIONS #####
+    ###### UTTERANCE LOADING FUNCTIONS #####
+    ###### 表达；说话；说话方式 #####
+
     #######################################
     
     def set_utterances(self, utterances, utterances_speaker=None, speakers_names=None):

@@ -10,20 +10,21 @@ import io
 #import concurrent.futures
 import pickle
 
+import torch
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
 #from algorithm import Coref
-from neuralcoref.conllparser import FEATURES_NAMES
-from neuralcoref.dataset import NCBatchSampler, padder_collate
-from neuralcoref.compat import unicode_
+from neuralcoref.train.conllparser import FEATURES_NAMES
+from neuralcoref.train.dataset import NCBatchSampler, padder_collate
+from neuralcoref.train.compat import unicode_
 
 PACKAGE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
 OUT_PATH = os.path.join(PACKAGE_DIRECTORY, "test_corefs.txt") #fernandes.txt")#
 ALL_MENTIONS_PATH = os.path.join(PACKAGE_DIRECTORY, "test_mentions.txt")
 #KEY_PATH = os.path.join(PACKAGE_DIRECTORY, "conll-2012-test-test-key.txt")
-SCORING_SCRIPT = os.path.join(PACKAGE_DIRECTORY, "scorer_wrapper.pl")
+SCORING_SCRIPT = os.path.join(PACKAGE_DIRECTORY, "scorer\\scorer.bat")
 
 METRICS = ['muc', 'bcub', 'ceafm', 'ceafe', 'blanc']
 CONLL_METRICS = ['muc', 'bcub', 'ceafe']
@@ -34,7 +35,12 @@ class ConllEvaluator(object):
         """ Evaluate the pytorch model that is currently being build
             We take the embedding vocabulary currently being trained
         """
+        # self.test_key_file = test_key_file
+        # self.test_key_file = 'D:\\projects\\neuralcoref\\neuralcoref\\train\\data\\dev\\key.txt'
         self.test_key_file = test_key_file
+
+            
+
         self.cuda = args.cuda
         self.model = model
         batch_sampler = NCBatchSampler(dataset.mentions_pair_length,
@@ -134,14 +140,17 @@ class ConllEvaluator(object):
     ########################
     def get_max_score(self, batch, debug=False):
         inputs, mask = batch
-        inputs = tuple(Variable(i, volatile=True) for i in inputs)
+        with torch.no_grad():
+            inputs = tuple(Variable(i) for i in inputs)
+
+        # inputs = tuple(Variable(i, volatile=True) for i in inputs)
         if self.cuda:
             inputs = tuple(i.cuda() for i in inputs)
             mask = mask.cuda()
         self.model.eval()
         scores = self.model.forward(inputs, concat_axis=1).data
         scores.masked_fill_(mask, -float('Inf'))
-        _, max_idx = scores.max(dim=1) # We may want to weight the single score with coref.greedyness
+        _, max_idx = scores.max(dim=1)  # We may want to weight the single score with coref.greedyness
         if debug:
             print("Max_idx", max_idx)
         return scores.cpu().numpy(), max_idx.cpu().numpy()
@@ -214,26 +223,48 @@ class ConllEvaluator(object):
         """ Call the coreference scoring perl script on the created test file
         """
         print("🌋 Computing score")
+        print("Computing score path",file_path)
         score = {}
         ident = None
         for metric_name in CONLL_METRICS:
             if debug: print("Computing metric:", metric_name)
-            try:
-                scorer_out = subprocess.check_output(["perl",
-                                                      SCORING_SCRIPT,
-                                                      metric_name,
-                                                      self.test_key_file,
-                                                      file_path], stderr=subprocess.STDOUT, encoding='utf-8')
-            except subprocess.CalledProcessError as err:
-                print("Error during the scoring")
-                print(err)
-                print(err.output)
-                raise
-            if debug: print("scorer_out", scorer_out)
-            value, ident = scorer_out.split(u"\n")[-2], scorer_out.split(u"\n")[-1]
-            if debug: print("value", value, "identification", ident)
-            NR, DR, NP, DP = [float(x) for x in value.split(u" ")]
-            ident_NR, ident_DR, ident_NP, ident_DP = [float(x) for x in ident.split(u" ")]
+            # try:
+            #     scorer_out = subprocess.check_output(["perl",
+            #                                           SCORING_SCRIPT,
+            #                                           metric_name,
+            #                                           self.test_key_file,
+            #                                           file_path], stderr=subprocess.STDOUT, text=True,shell=True)
+            # except subprocess.CalledProcessError as err:
+            #     print("Error during the scoring")
+            #     print(err)
+            #     print(err.output)
+            #     raise
+            cmd = [SCORING_SCRIPT, metric_name, self.test_key_file, file_path, "none"]
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+            stdout, stderr = process.communicate()
+            process.wait()
+            stdout = stdout.decode("utf-8")
+            ident, value = stdout.split(u"\r\n")[-5], stdout.split(u"\r\n")[-3]
+            print("value", value, "identification", ident)
+            core_list = value.split(u" ") 
+            print("core_list",core_list)
+            NR = float(core_list[2][1:])
+            print("nr",NR)
+            DR = float(core_list[4][:-1])
+            NP = float(core_list[6][1:])
+            DP = float(core_list[8][:-1])
+
+            id_list=ident.split(u" ")
+            ident_NR=float(id_list[4][1:])
+            ident_DR=float(id_list[6][:-1])
+            ident_NP=float(id_list[8][1:])
+            ident_DP=float(id_list[10][:-1])
+
+            # if debug: print("scorer_out", scorer_out)
+            # value, ident = scorer_out.split(u"\n")[-2], scorer_out.split(u"\n")[-1]
+            # if debug: print("value", value, "identification", ident)
+            # NR, DR, NP, DP = [float(x) for x in value.split(u" ")]
+            # ident_NR, ident_DR, ident_NP, ident_DP = [float(x) for x in ident.split(u" ")]
             precision = NP/DP if DP else 0
             recall = NR/DR if DR else 0
             F1 = 2 * precision * recall / (precision + recall) if precision + recall > 0 else 0

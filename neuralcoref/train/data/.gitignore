@@ -1,4 +1,4 @@
 # Ignore everything in this directory
-*
+test.chinese.v4_gold_conll
 # Except this file
 !.gitignore

@@ -30,11 +30,11 @@ skeleton2conll.sh  -D [path_to_ontonotes_dev_folder] [path_to_skeleton_dev_folde
 ````
 
 ## Prepare the data
-Once you have the set of `*._conll` files, you can prepare the training data by running [conllparser.py](/neuralcoref/conllparser.py) on each split of the data set (train, test, dev) as
+Once you have the set of `*._conll` files, you can prepare the training data by running [conllparser.py](/neuralcoref/conllparser.py) on each split of the data set (train, test, dev) as( 进入train目录下 )
 ````bash
-python -m neuralcoref.conllparser --path ./data/train/
-python -m neuralcoref.conllparser --path ./data/test/
-python -m neuralcoref.conllparser --path ./data/dev/
+python -m conllparser --path ./data/train/
+python -m conllparser --path ./data/test/
+python -m conllparser --path ./data/dev/
 ````
 
 Conllparser will:
@@ -46,12 +46,12 @@ Conllparser will:
 ## Train the model
 Once the files have been pre-processed (you should have a set of `*.npy` files in a sub-directory `/numpy` in each of your (train|test|dev) data folder), you can start the training process using [learn.py](/neuralcoref/learn.py), for example as
 ````bash
-python -m neuralcoref.learn --train ./data/train/ --eval ./data/dev/
+python -m learn --train ./data/train/ --eval ./data/dev/
 ````
 
 There many parameters and options for the training. You can list them with the usual
 ````bash
-python -m neuralcoref.learn --help
+python -m learn --help
 ````
 
 You can follow the training by running [Tensorboard for pyTorch](https://github.com/lanpa/tensorboard-pytorch) (it requires a version of Tensorflow, any version will be fine). Run it with `tensorboard --logdir runs`.

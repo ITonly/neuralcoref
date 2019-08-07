@@ -1,8 +1,14 @@
 # NeuralCoref
 /neuralcoref/train/runs/*
 /models/
+/neuralcoref/train/data/
 /data/
-
+/lsd/*
+neuralcoref/reference-coreference-scorers-8.01/*
+neuralcoref/reference-coreference-scorers-8.01.zip
+.idea/
+zh_core_web_sm-2.0.5.tar.gz
+lsd.zip
 # Cython / C extensions
 cythonize.json
 neuralcoref/*.html

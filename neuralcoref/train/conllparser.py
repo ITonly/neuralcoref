@@ -21,9 +21,9 @@ import numpy as np
 
 from tqdm import tqdm
 
-from .compat import unicode_
-from .document import Mention, Document, Speaker, EmbeddingExtractor, MISSING_WORD
-from .utils import parallel_process
+from neuralcoref.train.compat import unicode_
+from neuralcoref.train.document import Mention, Document, Speaker, EmbeddingExtractor, MISSING_WORD,extract_mentions_spans
+from neuralcoref.train.utils import parallel_process
 
 PACKAGE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 REMOVED_CHAR = ["/", "%", "*"]
@@ -272,7 +272,7 @@ class ConllDoc(Document):
         '''
         Compute a look up table between spacy tokens (from spacy tokenizer)
         and conll pre-tokenized tokens
-        Output: list[conll_index] => list of associated spacy tokens (assume spacy tokenizer has a finer granularity)
+        Output: list[conll_index] => list of associated spacy tokens (assume spacy tokenizer has a finer granularity )更细粒度
         '''
         lookup = []
         c_iter = (t for t in conll_tokens)
@@ -308,19 +308,23 @@ class ConllDoc(Document):
             self.speakers[speaker_id] = Speaker(speaker_id, speaker_name)
         if use_gold_mentions:
             for coref in corefs:
-                #            print("coref['label']", coref['label'])
-                #            print("coref text",parsed[coref['start']:coref['end']])
+                # print("coref['label']", coref['label'])
+                # print("coref text",parsed[coref['start']:coref['end']])
                 mention = Mention(parsed[coref['start']:coref['end']], len(self.mentions), len(self.utterances),
                                   self.n_sents, speaker=self.speakers[speaker_id], gold_label=coref['label'])
                 self.mentions.append(mention)
                 #            print("mention: ", mention, "label", mention.gold_label)
         else:
-            self._extract_mentions(parsed, len(self.utterances), self.n_sents, self.speakers[speaker_id])
+            #  self._extract_mentions(parsed, len(self.utterances), self.n_sents, self.speakers[speaker_id])
+            # extract_mentions_spans(parsed, len(self.utterances), self.n_sents, self.speakers[speaker_id])
+            m_spans = list(extract_mentions_spans(parsed))
+            # self.mentions=m_spans
+            self._process_mentions(m_spans, len(self.utterances), self.n_sents, self.speakers[speaker_id])
             # Assign a gold label to mentions which have one
             if debug: print("Check corefs", corefs)
             for i, coref in enumerate(corefs):
                 for m in self.mentions:
-                    if m.utterance_index != len(self.utterances):
+                    if m.utterance_index and m.utterance_index != len(self.utterances):
                         continue
                     # if debug: print("Checking mention", m, m.utterance_index, m.start, m.end)
                     if coref['start'] == m.start and coref['end'] == m.end - 1:
@@ -646,7 +650,7 @@ class ConllCorpus(object):
             n_mentions_list.append(n)
 
         for feature in FEATURES_NAMES[:9]:
-            print("Building numpy array for", feature, "length", len(gathering_dict[feature]))
+            # print("Building numpy array for", feature, "length", len(gathering_dict[feature]))
             if feature != "mentions_spans":
                 array = np.array(gathering_dict[feature])
                 if array.ndim == 1:

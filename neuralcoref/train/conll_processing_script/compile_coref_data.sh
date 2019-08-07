@@ -24,6 +24,8 @@ function download_and_extract() {
 
 function compile_partition() {
     rm -f $2.$5.$3$4
+    # 把一个或多个已存在的文件内容，追加到一个已存在的文件中
+    # conll-2012/v4/data/train/data/chinese/annotations/*/*/*/*.v4_gold_conll >> train.chinese.v4_gold_conll
     cat conll-2012/$3/data/$1/data/$5/annotations/*/*/*/*.$3$4 >> $2.$5.$3$4
 }
 

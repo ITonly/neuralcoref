@@ -18,11 +18,11 @@ from torch.optim import RMSprop
 from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 
-from neuralcoref.model import Model
-from neuralcoref.dataset import (NCDataset, NCBatchSampler,
-    load_embeddings_from_file, padder_collate,
-    SIZE_PAIR_IN, SIZE_SINGLE_IN, SIZE_EMBEDDING)
-from neuralcoref.evaluator import ConllEvaluator
+from neuralcoref.train.model import Model
+from neuralcoref.train.dataset import (NCDataset, NCBatchSampler,
+    load_embeddings_from_file, padder_collate)
+from neuralcoref.train.utils import SIZE_PAIR_IN, SIZE_SINGLE_IN, SIZE_EMBEDDING
+from neuralcoref.train.evaluator import ConllEvaluator
 
 PACKAGE_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 STAGES = ["allpairs", "toppairs", "ranking"]
@@ -180,13 +180,25 @@ def run_model(args):
                     print("Labels:\n" + "\n".join("|".join(str(s) for s in s_l) for s_l in targets[0].data.cpu().numpy()))
                 loss = loss_func(scores, targets)
                 if debug is not None and (debug == -1 or debug in m_idx):
-                    print('Loss', loss.data[0])
+                    print('Loss', loss.data.item() if len(loss.data.size()) == 0 else loss.data[0])
                 # Zero gradients, perform a backward pass, and update the weights.
                 optim_func.zero_grad()
                 loss.backward()
-                epoch_loss += loss.data[0]
+                if len(loss.data.size()) == 0:
+                    epoch_loss +=loss.data.item()
+                    print('loss data item1', loss.data.item())
+                else:
+                    epoch_loss += loss.data[0]
+                    print('loss data item2', loss.data[0])
                 optim_func.step()
-                writer.add_scalar("train/" + save_name + "_loss", loss.data[0], g_step)
+
+
+                if len(loss.data.size()) == 0:
+                    writer.add_scalar("train/" + save_name + "_loss", loss.data.item(), g_step)
+                else:
+                    writer.add_scalar("train/" + save_name + "_loss", loss.data[0], g_step)
+
+                # writer.add_scalar("train/" + save_name + "_loss", loss.data[0], g_step)
                 writer.add_scalar("meta/" + "lr", lr, g_step)
                 writer.add_scalar("meta/" + "stage", STAGES.index(save_name), g_step)
                 g_step += 1
@@ -195,7 +207,7 @@ def run_model(args):
                     print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:.2e} | ms/batch {:5.2f} | '
                             'loss {:.2e}'.format(
                         epoch, batch_i, len(dataloader), optim_func.param_groups[0]['lr'],
-                        elapsed * 1000 / args.log_interval, loss.data[0]))
+                        elapsed * 1000 / args.log_interval, loss.data.item() if len(loss.data.size()) == 0 else loss.data[0] ))
                     start_time_log = time.time()
             elapsed_all = time.time() - start_time_all
             elapsed_epoch = time.time() - start_time_epoch
@@ -312,12 +324,14 @@ if __name__ == '__main__':
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     args.cuda = torch.cuda.is_available()
+    print('torch.cuda.device_count()',torch.cuda.device_count())
+    print('torch.cuda.get_device_name(0)',torch.cuda.get_device_name(0))
     if args.cuda:
         torch.cuda.manual_seed(args.seed)
 
-    args.evalkey = args.evalkey if args.evalkey is not None else args.eval + "/key.txt"
-    args.trainkey = args.train + "/key.txt"
-    args.train = args.train + "/numpy/"
-    args.eval = args.eval + "/numpy/"
+    args.evalkey = args.evalkey if args.evalkey is not None else args.eval + "key.txt"
+    args.trainkey = args.train + "key.txt"
+    args.train = args.train + "numpy/"
+    args.eval = args.eval + "numpy/"
     print(args)
     run_model(args)

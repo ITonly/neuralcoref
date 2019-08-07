@@ -14,6 +14,8 @@ NeuralCoref is accompanied by a visualization client [NeuralCoref-Viz](https://g
 [![Travis-CI](https://travis-ci.org/huggingface/neuralcoref.svg?branch=master)](https://travis-ci.org/huggingface/neuralcoref)
 [![NeuralCoref online Demo](https://huggingface.co/coref/assets/thumbnail-large.png)](https://huggingface.co/coref/)
 
+hui 
+
 - **Operating system**: macOS / OS X · Linux · Windows (Cygwin, MinGW, Visual Studio)
 - **Python version**: Python 3.5+ (only 64 bit)
 - **Package managers**: [pip]
@@ -300,3 +302,8 @@ There are many other ways you can manage and deploy NeuralCoref. Some examples c
 ## Re-train the model / Extend to another language
 
 If you want to retrain the model or train it on another language, see our [training instructions](./neuralcoref/train/training.md) as well as our [blog post](https://medium.com/huggingface/how-to-train-a-neural-coreference-model-neuralcoref-2-7bb30c1abdfe)
+
+
+python -m neuralcoref.conllparser --path ./data/train/
+python -m neuralcoref.conllparser --path ./data/test/
+python -m neuralcoref.conllparser --path ./data/dev/

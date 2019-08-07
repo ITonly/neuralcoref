@@ -8,7 +8,9 @@ BEGIN {
     unshift(@INC, "lib");
   }
   else {
-    unshift(@INC, $d . "/lib");
+    unshift(@INC, $d . "\\lib");
+    print "test";
+    print $d;
   }
 }
 

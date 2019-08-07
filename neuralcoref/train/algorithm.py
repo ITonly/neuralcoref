@@ -11,9 +11,9 @@ import os
 import spacy
 import numpy as np
 
-from neuralcoref.utils import PACKAGE_DIRECTORY, SIZE_PAIR_IN, SIZE_SINGLE_IN
-from neuralcoref.compat import unicode_
-from neuralcoref.document import Document, MENTION_TYPE, NO_COREF_LIST
+from utils import PACKAGE_DIRECTORY, SIZE_PAIR_IN, SIZE_SINGLE_IN
+from compat import unicode_
+from document import Document, MENTION_TYPE, NO_COREF_LIST
 
 #######################
 ##### UTILITIES #######
